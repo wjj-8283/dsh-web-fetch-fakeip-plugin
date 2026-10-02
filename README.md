@@ -74,14 +74,21 @@ TLS SNI 仍然是原域名（dsh 保留了 URL hostname）。所以同一台机�
 
 ## 安装
 
-### 方式 A：一行命令从 GitHub 装（推荐）
+### 方式 A：从 npm 装（推荐）
+
+```bash
+dsh plugin --profile <profile> add @wjj-8283/dsh-web-fetch-fakeip
+```
+装完直接重启 dsh 即可。
+
+### 方式 B：一行命令从 GitHub 装
 
 ```bash
 dsh plugin --profile <profile> add github:wjj-8283/dsh-web-fetch-fakeip-plugin
 ```
 装完直接重启 dsh 即可。
 
-### 方式 B：克隆到本地用 `link:`
+### 方式 C：克隆到本地用 `link:`
 
 ```bash
 git clone https://github.com/wjj-8283/dsh-web-fetch-fakeip-plugin.git
@@ -117,15 +124,17 @@ dsh plugin --profile <profile> add link:/path/to/dsh-web-fetch-fakeip-plugin
     enabled: false
 ```
 
-**彻底卸载**：方式 A 装的用一条命令（依赖和 bundles 条目会一起清掉）：
+**彻底卸载**：方式 A / B / C 都是 `add` 装的，一条命令即可（依赖和 `dsh.profile.bundles`
+条目会一起清掉）：
 
 ```bash
 dsh plugin --profile <profile> remove @wjj-8283/dsh-web-fetch-fakeip
 ```
 
-方式 B（`link:`）装的，删掉 `package.json` 里 dependencies 和 `dsh.profile.bundles` **两处**
+若你是手工编辑 `package.json` 装的（自己写 `link:` 再 `install`），删掉 dependencies 和
+`dsh.profile.bundles` **两处**，再跑 `dsh plugin --profile <profile> install`。
 
-两条路都要重启 dsh。
+无论哪种，都要重启 dsh。
 
 
 ## 已知边界
