@@ -105,20 +105,34 @@ TLS SNI 仍然是原域名（dsh 保留了 URL hostname）。所以同一台机�
 
 ## 安装
 
-### 1. 克隆到本地
+两种方式任选其一，之后都要做第 2、3 步。
+
+### 方式 A：克隆到本地（推荐）
 
 ```bash
 git clone https://github.com/wjj-8283/dsh-web-fetch-fakeip-plugin.git ~/repos/dsh-web-fetch-fakeip-plugin
 ```
 
-### 2. 链接进 dsh profile
+依赖写成指向该目录的 `link:` 形式。代码就在手边，改起来、看日志都方便。
 
-编辑 `$DSH_HOME/profiles/<profile>/package.json`（Web UI 用的 profile 通常叫 `web`），加**两处**：
+### 方式 B：交给 pnpm 直接从 GitHub 安装
+
+```bash
+dsh plugin --profile <profile> add github:wjj-8283/dsh-web-fetch-fakeip-plugin
+```
+
+pnpm 会把它装成 profile 的普通依赖（本仓库实测装出 `@wjj-8283/dsh-web-fetch-fakeip@0.1.0`）。
+省去手工维护本地目录，代价是更新时要重新 `add` 一次。
+
+### 2. 把包名加进 bundles
+
+编辑 `$DSH_HOME/profiles/<profile>/package.json`（Web UI 用的 profile 通常叫 `web`），确保**两处**都在：
 
 ```jsonc
 {
   "dependencies": {
-    // ① 依赖：link: 后面是上一步克隆出来的绝对路径
+    // ① 依赖：方式 A 用 link: 指向克隆出来的绝对路径；
+    //    方式 B 由上面的 add 命令自动写成 "github:wjj-8283/dsh-web-fetch-fakeip-plugin"
     "@wjj-8283/dsh-web-fetch-fakeip": "link:/Users/you/repos/dsh-web-fetch-fakeip-plugin"
   },
   "dsh": {
