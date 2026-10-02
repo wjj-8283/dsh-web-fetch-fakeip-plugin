@@ -22,7 +22,6 @@
 ## 目录
 
 - [问题是什么](#问题是什么)
-- [这不是 Windows / macOS 的实现差异](#这不是-windows--macos-的实现差异)
 - [它做了什么](#它做了什么)
 - [安装](#安装)
 - [确认是否生效](#确认是否生效)
@@ -57,25 +56,6 @@ TLS SNI 仍然是原域名（dsh 保留了 URL hostname）。所以同一台机�
 
 一个容易忽略的细节：解析结果里 IPv4 和 IPv6 **都**是 fake IP，而校验是"结果集里任一地址不合法
 就整体拒绝"，所以只豁免 IPv4 段是不够的，AAAA 那半边一样会拦。
-
-## 这不是 Windows / macOS 的实现差异
-
-排查过 `dsh-web-fetch-http`、`dsh-http-proxy`、`dsh-web`、`dsh-tool-web` 四个包的 `lib/*.js`，
-`process.platform` 出现次数均为 **0**；代理策略也只从环境变量解析（`http_proxy` / `https_proxy` /
-`all_proxy` / `no_proxy`）。`@deepseek-ai/dsh-http-proxy` 的 README 明确写着不读操作系统代理设置：
-
-> **No SOCKS, PAC, or operating-system proxy detection** — A macOS or Windows system-proxy setting
-> is not read, so a user who only toggled it in a proxy application must still export the variables
-
-真正决定成败的是"这次解析走了哪个 resolver"。实测对照就很清楚：同一台 macOS、同一份 Clash 配置，
-
-| | resolver #1 | `dns.lookup('mpv.io')` | `web_fetch` |
-|---|---|---|---|
-| 装有 Tailscale（MagicDNS `100.100.100.100`） | 走 Tailscale 自己的 utun，**不进** Clash TUN | `104.21.43.168`（真实） | HTTP 200 |
-| 退出 Tailscale 后 | `114.114.114.114`，被 Clash `dns-hijack: any:53` 捕获 | `198.18.0.4` + `2001:2::f` | `WEB_BLOCKED_URL` |
-
-也就是说，"Mac 上没事、Windows 上有事"往往只是 resolver 顺序的偶然。关掉 Tailscale，那台 Mac
-就报出和 Windows 一模一样的错误——所以这**不是**平台实现差异，不需要等上游修。
 
 ## 它做了什么
 
