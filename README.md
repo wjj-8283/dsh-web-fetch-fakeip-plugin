@@ -85,41 +85,56 @@ TLS SNI 仍然是原域名（dsh 保留了 URL hostname）。所以同一台机�
 
 ## 安装
 
-两种方式任选其一，之后都要做第 2、3 步。
-
-### 方式 A：克隆到本地（推荐）
-
-```bash
-git clone https://github.com/wjj-8283/dsh-web-fetch-fakeip-plugin.git ~/repos/dsh-web-fetch-fakeip-plugin
-```
-
-依赖写成指向该目录的 `link:` 形式。代码就在手边，改起来、看日志都方便。
-
-### 方式 B：交给 pnpm 直接从 GitHub 安装
+### 方式 A：一行命令从 GitHub 装（推荐）
 
 ```bash
 dsh plugin --profile <profile> add github:wjj-8283/dsh-web-fetch-fakeip-plugin
 ```
 
-pnpm 会把它装成 profile 的普通依赖（本仓库实测装出 `@wjj-8283/dsh-web-fetch-fakeip@0.1.0`）。
-省去手工维护本地目录，代价是更新时要重新 `add` 一次。
+**这一条就够了，不需要手工编辑任何文件。** `dsh plugin` 不是裸 pnpm——它在 pnpm 成功后还会做一次
+协调：**凡是本次新装进来、且在 package.json 里声明了 `dsh.bundle` 的依赖，会被自动追加进
+`dsh.profile.bundles`**（没有 `dsh.bundle` 的包只会得到一条
+`declares no dsh.bundle — installed as a plain dependency, not a profile layer` 警告）。
+实测 `dsh plugin --profile <profile> add …` 后的 package.json 变化：
 
-### 2. 把包名加进 bundles
+```diff
+   "dependencies": {
++    "@wjj-8283/dsh-web-fetch-fakeip": "github:wjj-8283/dsh-web-fetch-fakeip-plugin"
+   },
+   "dsh": { "profile": { "bundles": [
+     "@deepseek-ai/dsh-base",
++    "@wjj-8283/dsh-web-fetch-fakeip"
+   ] } }
+```
 
-编辑 `$DSH_HOME/profiles/<profile>/package.json`（Web UI 用的 profile 通常叫 `web`），确保**两处**都在：
+卸载同理，`remove` 会把它从 bundles 里摘掉：
+
+```bash
+dsh plugin --profile <profile> remove @wjj-8283/dsh-web-fetch-fakeip
+```
+
+装完直接重启 dsh 即可（`add` 已经跑过安装）。
+
+### 方式 B：克隆到本地用 `link:`
+
+```bash
+git clone https://github.com/wjj-8283/dsh-web-fetch-fakeip-plugin.git ~/repos/dsh-web-fetch-fakeip-plugin
+```
+
+编辑 `$DSH_HOME/profiles/<profile>/package.json`（Web UI 用的 profile 通常叫 `web`），
+**两处都要写**：
 
 ```jsonc
 {
   "dependencies": {
-    // ① 依赖：方式 A 用 link: 指向克隆出来的绝对路径；
-    //    方式 B 由上面的 add 命令自动写成 "github:wjj-8283/dsh-web-fetch-fakeip-plugin"
+    // ① 依赖：link: 后面是上一步克隆出来的绝对路径
     "@wjj-8283/dsh-web-fetch-fakeip": "link:/Users/you/repos/dsh-web-fetch-fakeip-plugin"
   },
   "dsh": {
     "profile": {
       "bundles": [
         "@deepseek-ai/dsh-base",
-        // ② bundle：必须显式列出，dsh 不会从依赖里自动发现它
+        // ② bundle：必须自己写，见下面的说明
         "@wjj-8283/dsh-web-fetch-fakeip"
       ]
     }
@@ -127,18 +142,23 @@ pnpm 会把它装成 profile 的普通依赖（本仓库实测装出 `@wjj-8283/
 }
 ```
 
-> `bundles` 里这一条**不能省**。bundle 列表决定 patch 层的应用顺序，而本插件的挂载方式正是
-> 自己 bundle 里的 `cordis.patch.yml` 做一次 `insert`。用
-> `dsh --profile <profile> --dump-config` 可以看到 `# == @wjj-8283/dsh-web-fetch-fakeip` 这一行，
-> 确认 patch 层确实生效。
+> **为什么这条路径要自己写 bundles，而方式 A 不用？** 协调逻辑只处理**本次操作新增**的依赖。
+> 方式 B 是先手工把依赖写进 package.json、再跑 `install`，此时插件早已在依赖列表里，于是被跳过；
+> 方式 A 是先 `add` 再由 dsh 补写，正好命中"新增"分支。
+>
+> 另外 bundle 列表决定 patch 层的应用顺序，而本插件的挂载方式正是自己 bundle 里的
+> `cordis.patch.yml` 做一次 `insert`。用 `dsh --profile <profile> --dump-config` 能看到
+> `# == @wjj-8283/dsh-web-fetch-fakeip` 这一行，确认 patch 层生效。
 
-### 3. 安装并重启
+然后安装并重启：
 
 ```bash
 dsh plugin --profile <profile> install
 ```
 
-然后重启 dsh。启动日志里会出现（`ctx.logger.info`）：
+### 启动后确认
+
+无论走哪条路，重启 dsh 后启动日志里都会出现（`ctx.logger.info`）：
 
 ```
 web-fetch-fakeip: 已接管 1 个 fetch provider 的公网地址校验（放行 fake-ip 段：198.18.0.0/15, fdfe:dcba:9876::/64, 2001:2::/48）
@@ -146,7 +166,7 @@ web-fetch-fakeip: 已接管 1 个 fetch provider 的公网地址校验（放行 
 
 ### Windows 注意
 
-- `link:` 路径用正斜杠，例如 `"link:D:/repos/dsh-web-fetch-fakeip-plugin"`。
+- 走 `link:` 时路径用正斜杠，例如 `"link:D:/repos/dsh-web-fetch-fakeip-plugin"`。
 - `package.json` 里的 **`peerDependencies` 不能删**。dsh 的模块路由（`dsh-app-boot` 的
   `routeLinked`）只在插件把自己的框架依赖声明为 peerDependency 时，才把该 import 路由到 dsh
   的安装副本；`link:` 安装的插件目录向上没有任何 `node_modules` 含这些包，删掉后启动会报
@@ -197,13 +217,19 @@ http://10.0.0.1/                  -> WEB_BLOCKED_URL
     enabled: false
 ```
 
-**彻底卸载**：删掉 `package.json` 里上面那两处，然后
+**彻底卸载**：方式 A 装的用一条命令（依赖和 bundles 条目会一起清掉）：
+
+```bash
+dsh plugin --profile <profile> remove @wjj-8283/dsh-web-fetch-fakeip
+```
+
+方式 B（`link:`）装的，删掉 `package.json` 里 dependencies 和 `dsh.profile.bundles` **两处**，再
 
 ```bash
 dsh plugin --profile <profile> install
 ```
 
-并重启 dsh。
+两条路都要重启 dsh。
 
 ## 故障排查
 
@@ -211,7 +237,8 @@ dsh plugin --profile <profile> install
 |---|---|
 | 启动日志显示「已接管 **0** 个」 | 上游把 `resolveAddresses` 从 provider 实例上挪走了，插件静默失效。升级 dsh 后遇到请提 issue |
 | 启动报 `Cannot find package '@deepseek-ai/schemastery'` | `package.json` 的 `peerDependencies` 被删了，见上文 Windows 注意 |
-| 启动报 `patch: entry "web-fetch-fakeip" not found` | `dsh.profile.bundles` 里漏了这一条 |
+| 启动报 `patch: entry "web-fetch-fakeip" not found` | `dsh.profile.bundles` 里没有这一条——手工编辑 package.json（方式 B）时最容易漏 |
+| `add` 后看到 `declares no dsh.bundle — installed as a plain dependency, not a profile layer` | 装的包里没有 `dsh.bundle` 声明，它不会被当作 profile 层加载。本插件有声明，正常不会出现 |
 | 仍然报 `non-public IP address` | ① 插件没加载（需重启 dsh）；② 你的 Clash 用了自定义 `fake-ip-range`，用上面 `fakeIpRanges` 补上 |
 | 报 `WEB_PROVIDER_AMBIGUOUS` | 有别的插件也注册了 fetch provider。本插件不新增 provider，不会引发这个错误 |
 
