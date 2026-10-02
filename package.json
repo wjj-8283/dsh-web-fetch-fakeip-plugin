@@ -1,0 +1,54 @@
+{
+  "name": "@wjj-8283/dsh-web-fetch-fakeip",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DSH 插件：让 web_fetch 在 Clash / mihomo 的 TUN + fake-ip 模式下正常工作。只豁免 fake-ip 保留段（198.18.0.0/15、fdfe:dcba:9876::/64、2001:2::/48），其余 SSRF 防护不变；不需要任何代理环境变量或 Clash 改动。",
+  "type": "module",
+  "license": "MIT",
+  "author": "wjj-8283",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wjj-8283/dsh-web-fetch-fakeip-plugin.git"
+  },
+  "homepage": "https://github.com/wjj-8283/dsh-web-fetch-fakeip-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/wjj-8283/dsh-web-fetch-fakeip-plugin/issues"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "plugin",
+    "web-fetch",
+    "clash",
+    "mihomo",
+    "fake-ip",
+    "tun"
+  ],
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./resolver": "./lib/resolver.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/schemastery": "^3.18.4"
+  },
+  "scripts": {
+    "test": "node test/resolver.test.mjs"
+  },
+  "engines": {
+    "node": ">=22.19"
+  },
+  "files": [
+    "lib",
+    "test",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ]
+}

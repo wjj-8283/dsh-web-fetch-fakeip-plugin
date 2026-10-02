@@ -1,0 +1,29 @@
+# 依赖
+node_modules/
+.pnpm-store/
+.pnpm/
+
+# 构建产物 / 缓存（本插件无构建步骤，列在这里以防将来引入）
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# 打包产物（仓库里只放源码，归档由使用者自行生成）
+*.tgz
+*.tar.gz
+
+# 日志
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# 本地测试符号链接（开发时把 node_modules 指到 profile 的拦截层用）
+/test/node_modules
