@@ -3,7 +3,11 @@ node_modules/
 .pnpm-store/
 .pnpm/
 
-# 构建产物 / 缓存（本插件无构建步骤，列在这里以防将来引入）
+# npm 的锁文件：devDependencies 只用于测试，不锁定（与作者其它插件仓库一致）
+package-lock.json
+
+# 构建中间产物 / 缓存。注意 lib/client.js 是 build.mjs 的产物但要提交：
+# 浏览器半插件由 shell 直接按 exports["./client"] 取文件，npm 包也必须带预构建产物。
 dist/
 build/
 coverage/

@@ -83,7 +83,9 @@ dsh plugin --profile <profile> add link:/path/to/dsh-web-fetch-fakeip-plugin
 
 ## 可选配置
 
-不配也能用。若你的 Clash 用了非标准 `fake-ip-range`，在 profile 的 patch 层覆盖（例如 `$DSH_HOME/profiles/<profile>/cordis.patch.yml`）：
+**在 GUI 里改**：装好后「设置」导航里会多出一项 **fake-ip 直连修复**，里面有启用开关和 fake-ip 地址段列表（每行一个 CIDR）。写入会落到当前 profile 的 Cordis patch，与手工编辑那个文件是同一份事实来源，服务端随之重新加载，不需要重启。
+
+也可以直接编辑 profile 的 patch 层（例如 `$DSH_HOME/profiles/<profile>/cordis.patch.yml`）：
 
 ```yaml
 - id: web-fetch-fakeip
@@ -95,7 +97,7 @@ dsh plugin --profile <profile> add link:/path/to/dsh-web-fetch-fakeip-plugin
       - 2001:2::/48
 ```
 
-`enabled: false` 可临时停用（无需卸载）。配置在启动期校验，非法 CIDR 会立刻报错，而不是等到第一次抓取才失败。
+`enabled: false` 可暂停用（无需卸载）。非法 CIDR 会被记一条错误日志并回落到默认段：设置页能直接改这个字段，一个手误不该让插件起不来——entry 一旦加载失败就会从设置页消失，反而改不回来。
 
 ## 卸载与回滚
 
@@ -129,15 +131,21 @@ dsh plugin --profile <profile> remove @wjj-8283/dsh-web-fetch-fakeip
 | 文件 | 作用 |
 |---|---|
 | [`lib/resolver.js`](lib/resolver.js) | 纯逻辑：fake-ip 段匹配 + `resolveAddresses` 包装。只依赖 `node:net` / `node:dns`，可单独单测 |
-| [`lib/index.js`](lib/index.js) | cordis 插件：inject `web`，在 `apply` 里就地补丁 + 兜住后注册的 provider + 可逆卸载 |
-| [`cordis.patch.yml`](cordis.patch.yml) | bundle patch，只 insert 一个 node 半插件（无客户端半插件、不注册路由和设置项） |
+| [`lib/index.js`](lib/index.js) | cordis 插件：inject `web`，在 `apply` 里就地补丁 + 兜住后注册的 provider + 可逆卸载；两个字段标了 `.volatile()` 供设置页读写 |
+| [`src/client.js`](src/client.js) | 浏览器半插件源码：用 `settings.section` 注册设置页，读写走 `ctx.configForms` |
+| [`lib/client.js`](lib/client.js) | 由 [`build.mjs`](build.mjs) 从 `src/client.js` 生成（shell 按 `exports["./client"]` 取它，npm 包必须带预构建产物，故一并提交） |
+| [`cordis.patch.yml`](cordis.patch.yml) | bundle patch，把 node 半插件挂进 profile |
 | [`test/resolver.test.mjs`](test/resolver.test.mjs) | 36 项断言：保留段判定 + 包装器在各种解析结果下的行为（含内网 / link-local 仍被拒） |
+| [`test/server.test.mjs`](test/server.test.mjs) | 8 项：`volatile` 标记、设置页策略、接管与撤销、`enabled:false` 短路、非法值回落 |
+| [`test/client.test.mjs`](test/client.test.mjs) | 14 项：加载构建产物，用真 React 渲染设置页并驱动交互（开关 / 保存 / 恢复默认 / 非法输入拦截） |
 
 ```bash
-npm test
+npm test           # 三个套件；后两个缺依赖时跳过而不是失败
+npm run build      # 从 src/client.js 重新生成 lib/client.js
+npm run check      # 校验提交的 lib/client.js 与 src 一致
 ```
 
-测试零依赖，`node` 直接跑即可。
+`test/resolver.test.mjs` 零依赖；另两个需要 devDependencies（`npm install`），或在 dsh 的 profile 环境里跑。**改了 `src/client.js` 必须跑 `npm run build` 并提交 `lib/client.js`**，否则 shell 取到的还是旧产物。
 
 ## License
 

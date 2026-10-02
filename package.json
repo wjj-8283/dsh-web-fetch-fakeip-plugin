@@ -29,26 +29,47 @@
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
+    "./client": "./lib/client.js",
     "./resolver": "./lib/resolver.js",
     "./package.json": "./package.json"
   },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "slots",
+        "locale",
+        "configForms"
+      ]
     }
   },
   "peerDependencies": {
-    "@deepseek-ai/schemastery": "^3.18.4"
+    "@deepseek-ai/schemastery": "^3.18.4",
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/schemastery": "^3.18.4",
+    "react": "^18.2.0",
+    "react-test-renderer": "^18.2.0"
   },
   "scripts": {
-    "test": "node test/resolver.test.mjs",
-    "prepublishOnly": "npm test"
+    "test": "node test/resolver.test.mjs && node test/server.test.mjs && node test/client.test.mjs",
+    "test:resolver": "node test/resolver.test.mjs",
+    "build": "node build.mjs",
+    "build:watch": "node build.mjs --watch",
+    "check": "node build.mjs --check",
+    "prepublishOnly": "npm test && npm run check"
   },
   "engines": {
     "node": ">=22.19"
   },
   "files": [
     "lib",
+    "src",
+    "build.mjs",
     "test",
     "cordis.patch.yml",
     "README.md",
