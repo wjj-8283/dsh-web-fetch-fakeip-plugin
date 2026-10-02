@@ -1,9 +1,3 @@
-# @wjj-8283/dsh-web-fetch-fakeip — bundle patch。
-#
-# 只挂一个 node 半插件。它 inject `web`，在 apply 时就地把
-# `@deepseek-ai/dsh-web-fetch-http` 注册的 provider 的 `resolveAddresses`
-# 包一层，放行 TUN 产生的 fake-ip 地址。没有客户端半插件，不注册路由、
-# 不注册设置项，所以不会和别的插件抢 namespace。
 - insert:
     - id: web-fetch-fakeip
       name: '@wjj-8283/dsh-web-fetch-fakeip'
