@@ -1,6 +1,6 @@
 {
   "name": "@wjj-8283/dsh-web-fetch-fakeip",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "DSH 插件：让 web_fetch 在 Clash / mihomo 的 TUN + fake-ip 模式下正常工作。只豁免 fake-ip 保留段（198.18.0.0/15、fdfe:dcba:9876::/64、2001:2::/48），其余 SSRF 防护不变；不需要任何代理环境变量或 Clash 改动。",
   "type": "module",
   "license": "MIT",
