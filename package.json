@@ -72,6 +72,8 @@
     "build.mjs",
     "test",
     "cordis.patch.yml",
+    "screenshots",
+    "screenshots.json",
     "README.md",
     "LICENSE"
   ]

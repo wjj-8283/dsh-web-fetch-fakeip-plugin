@@ -18,6 +18,7 @@
 - [卸载与回滚](#卸载与回滚)
 - [已知边界](#已知边界)
 - [代码结构与测试](#代码结构与测试)
+- [截图](#截图)
 - [License](#license)
 
 ---
@@ -146,6 +147,18 @@ npm run check      # 校验提交的 lib/client.js 与 src 一致
 ```
 
 `test/resolver.test.mjs` 零依赖；另两个需要 devDependencies（`npm install`），或在 dsh 的 profile 环境里跑。**改了 `src/client.js` 必须跑 `npm run build` 并提交 `lib/client.js`**，否则 shell 取到的还是旧产物。
+
+## 截图
+
+修复前——Clash 以 TUN + fake-ip 运行时，`web_fetch` 把所有域名都解析成 198.18.x.x，于是每个请求都被判为"非公网地址"：
+
+![修复前：web_fetch 报 non-public IP address](screenshots/web-fetch-blocked-by-fake-ip.png)
+
+修复后——同样的 URL 正常取回正文，而 DNS 仍在发 fake-ip；同时云元数据地址与 loopback 仍被拒，说明豁免是精确到保留段的：
+
+![修复后：复测结果](screenshots/after-fix-verification.png)
+
+（这两张也在 [`screenshots.json`](screenshots.json) 里声明，供插件市场展示。）
 
 ## License
 
